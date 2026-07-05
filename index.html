@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فاکتور سفارش آنلاین | تیچر مشایخ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --board:#1f3a2e;
+  --board-dark:#16291f;
+  --header-purple:#b215c6;
+  --header-purple-dark:#8c0fa0;
+  --add-green:#3ecf8e;
+  --add-green-dark:#2fae72;
+  --paper:#faf6ec;
+  --paper-line:#e7ddc7;
+  --chalk:#f4efe2;
+  --ink:#2c2620;
+  --ink-soft:#6b6255;
+  --gold:#c98a2b;
+  --gold-dark:#a06f20;
+  --card-bg:#ffffff;
+  --danger:#b5462f;
+  --radius:14px;
+  --shadow: 0 2px 10px rgba(31,58,46,0.08);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Vazirmatn',Tahoma,Arial,sans-serif;
+  background:
+    repeating-linear-gradient(var(--paper) 0px, var(--paper) 27px, var(--paper-line) 28px),
+    var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  padding-bottom:70px;
+}
+
+header.top{
+  background:linear-gradient(180deg,var(--header-purple),var(--header-purple-dark));
+  color:var(--chalk);
+  padding:26px 20px 20px;
+  text-align:center;
+  position:relative;
+  box-shadow:var(--shadow);
+}
+header.top h1{font-size:24px;font-weight:800;letter-spacing:0.5px;}
+header.top p{margin-top:6px;font-size:13.5px;color:#f0d9f4;opacity:0.9;}
+header.top .chalk-line{
+  position:absolute;bottom:0;left:0;right:0;height:4px;
+  background:repeating-linear-gradient(90deg,var(--gold) 0 18px, transparent 18px 26px);
+  opacity:0.85;
+}
+
+.wrap{max-width:760px;margin:0 auto;padding:18px 14px;}
+
+.card-section{
+  background:var(--card-bg);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  border:1px solid var(--paper-line);
+  padding:18px 16px;
+  margin-bottom:16px;
+}
+.card-section h2{
+  font-size:15.5px;font-weight:800;margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-section h2 .step-num{
+  background:var(--header-purple);color:#fff;
+  width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12.5px;flex-shrink:0;
+}
+
+input.text-input, textarea.text-input{
+  width:100%;padding:12px 14px;border-radius:10px;
+  border:2px solid var(--paper-line);font-family:inherit;font-size:16px;
+  margin-bottom:12px;background:var(--card-bg);color:var(--ink);
+}
+input.text-input:focus, textarea.text-input:focus{outline:none;border-color:var(--header-purple);}
+textarea.text-input{resize:vertical;min-height:70px;}
+.field-hint{font-size:11.5px;color:var(--ink-soft);margin-top:-8px;margin-bottom:12px;}
+
+/* ---------- Grade tabs ---------- */
+.grades{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 14px;-webkit-overflow-scrolling:touch;}
+.grades::-webkit-scrollbar{display:none;}
+.grade-btn{
+  flex:0 0 auto;background:var(--paper);border:2px solid var(--paper-line);color:var(--ink);
+  padding:9px 15px;border-radius:999px;font-family:inherit;font-size:13.5px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.grade-btn.active{background:var(--board);border-color:var(--board);color:var(--chalk);}
+
+/* ---------- Search ---------- */
+.search-box{position:relative;margin-bottom:16px;}
+.search-box input{
+  width:100%;padding:13px 44px 13px 14px;border-radius:10px;border:2px solid var(--paper-line);
+  background:var(--paper);font-family:inherit;font-size:14.5px;color:var(--ink);
+}
+.search-box input:focus{outline:none;border-color:var(--gold);}
+.search-box .icon{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--ink-soft);font-size:15px;}
+
+.info-msg{text-align:center;color:var(--ink-soft);padding:24px 10px;font-size:13.5px;}
+.error-msg{
+  text-align:center;color:var(--danger);padding:14px;font-size:13.5px;
+  background:#fdf0ee;border:1px solid #f3c9c2;border-radius:10px;
+}
+
+/* ---------- Product list ---------- */
+.product-list{display:flex;flex-direction:column;gap:10px;}
+.product-card{
+  background:var(--paper);border-radius:12px;padding:13px 14px;
+  border:1px solid var(--paper-line);position:relative;
+}
+.product-card.out-of-stock{opacity:0.6;}
+.badge-ribbon{
+  position:absolute;top:-8px;left:10px;background:var(--gold);color:#fff;
+  font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;
+  box-shadow:0 2px 4px rgba(0,0,0,0.15);
+}
+.product-card .row-top{display:flex;gap:10px;justify-content:space-between;}
+.product-card .thumb{
+  width:52px;height:52px;border-radius:8px;object-fit:cover;
+  flex-shrink:0;border:1px solid var(--paper-line);background:#fff;
+}
+.product-card .pname{font-weight:700;font-size:15px;}
+.product-card .pmeta-line{font-size:11.5px;color:var(--ink-soft);margin-top:3px;}
+.product-card .pdesc{font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.5;}
+.oos-tag{
+  display:inline-block;background:var(--danger);color:#fff;font-size:11px;
+  padding:2px 8px;border-radius:6px;margin-top:6px;font-weight:700;
+}
+.expand{margin-top:12px;padding-top:12px;border-top:1px dashed var(--paper-line);}
+.field-row{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.field-row label{font-size:12.5px;color:var(--ink-soft);font-weight:600;}
+.size-select{
+  width:100%;padding:10px 12px;border-radius:8px;border:2px solid var(--paper-line);
+  background:#fff;font-family:inherit;font-size:16px;color:var(--ink);cursor:pointer;
+}
+.size-select:focus{outline:none;border-color:var(--header-purple);}
+.price-preview{
+  font-weight:800;color:var(--gold-dark);font-size:15px;margin-bottom:10px;
+}
+.price-preview .old{
+  text-decoration:line-through;color:var(--ink-soft);font-weight:500;font-size:12.5px;
+  margin-inline-start:6px;
+}
+.qty-control{display:flex;align-items:center;gap:10px;}
+.qty-control button{
+  width:34px;height:34px;border-radius:8px;border:2px solid var(--paper-line);
+  background:#fff;font-size:17px;cursor:pointer;color:var(--ink);
+}
+.qty-control span{font-weight:700;min-width:22px;text-align:center;}
+textarea.desc{
+  width:100%;padding:10px 12px;border-radius:8px;border:2px solid var(--paper-line);
+  font-family:inherit;font-size:13.5px;resize:vertical;min-height:40px;background:#fff;
+}
+.add-btn{
+  width:100%;padding:11px;border:none;border-radius:10px;background:var(--add-green);
+  color:#fff;font-family:inherit;font-weight:700;font-size:14.5px;cursor:pointer;margin-top:4px;
+}
+.add-btn:hover{background:var(--add-green-dark);}
+.add-btn:disabled{background:#bbb;cursor:not-allowed;}
+.select-toggle{
+  background:none;border:none;color:var(--header-purple);font-family:inherit;
+  font-weight:700;font-size:13.5px;cursor:pointer;padding:6px 0;
+}
+
+/* ---------- Cart ---------- */
+.cart-item{
+  background:var(--paper);border-radius:10px;padding:12px;margin-bottom:8px;
+  display:flex;justify-content:space-between;gap:10px;border:1px solid var(--paper-line);
+}
+.cart-item .info b{font-size:14px;}
+.cart-item .info .meta{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+.cart-item .price{font-weight:700;color:var(--gold-dark);white-space:nowrap;}
+.remove-x{background:none;border:none;color:var(--danger);font-size:12.5px;cursor:pointer;margin-top:6px;}
+.grand-total{
+  display:flex;justify-content:space-between;align-items:center;padding:14px 4px 2px;
+  font-size:16px;font-weight:800;border-top:2px dashed var(--paper-line);margin-top:6px;
+}
+
+/* ---------- Sticky bar ---------- */
+.cart-bar{
+  position:sticky;bottom:0;left:0;right:0;background:var(--board);color:var(--chalk);
+  border-radius:14px 14px 0 0;padding:13px 18px;box-shadow:0 -4px 16px rgba(0,0,0,0.15);
+  display:flex;justify-content:space-between;align-items:center;cursor:pointer;z-index:20;
+}
+.cart-bar .count{background:var(--gold);color:#fff;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;margin-inline-start:6px;}
+
+/* ---------- Terms / submit ---------- */
+.terms-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;}
+.terms-row input[type="checkbox"]{width:20px;height:20px;margin-top:2px;accent-color:var(--header-purple);cursor:pointer;flex-shrink:0;}
+.terms-row label{font-size:13.5px;line-height:1.7;cursor:pointer;}
+.terms-details{
+  font-size:12px;color:var(--ink-soft);background:var(--paper);border-radius:8px;
+  padding:10px 12px;margin-bottom:12px;line-height:1.8;
+}
+.primary-btn{
+  width:100%;padding:13px;border:none;border-radius:12px;background:var(--board);
+  color:var(--chalk);font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;
+}
+.primary-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.secondary-btn{
+  width:100%;padding:12px;border:2px solid var(--paper-line);border-radius:12px;
+  background:var(--card-bg);color:var(--ink);font-family:inherit;font-weight:700;
+  font-size:14px;cursor:pointer;margin-top:8px;
+}
+
+/* ---------- Invoice ---------- */
+.invoice-box{background:var(--paper);border:2px dashed var(--gold);border-radius:12px;padding:16px;margin-bottom:14px;}
+.invoice-box .track{text-align:center;font-size:20px;font-weight:800;color:var(--gold-dark);letter-spacing:1px;margin-bottom:8px;direction:ltr;}
+.invoice-box .track-label{text-align:center;font-size:12px;color:var(--ink-soft);margin-bottom:4px;}
+.invoice-line{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;border-bottom:1px dotted var(--paper-line);}
+.pay-box{background:#fff8e8;border:1px solid var(--gold);border-radius:10px;padding:14px;margin:14px 0;font-size:14px;line-height:2;}
+.pay-box b{color:var(--gold-dark);}
+.card-num{
+  direction:ltr;text-align:center;font-size:18px;font-weight:800;letter-spacing:2px;
+  background:#fff;border-radius:8px;padding:8px;margin:6px 0;border:1px dashed var(--gold-dark);
+}
+.status-msg{text-align:center;font-size:12.5px;color:var(--ink-soft);margin-top:10px;}
+.blink-warning{
+  text-align:center;color:#d81e1e;font-weight:800;font-size:14.5px;
+  padding:10px 6px;margin-bottom:12px;line-height:1.8;animation:blinkWarn 1s infinite;
+}
+@keyframes blinkWarn{0%,100%{opacity:1;}50%{opacity:0.25;}}
+
+.footer-print{text-align:center;padding:10px 0 30px;}
+
+/* ---------- Print / PDF invoice ---------- */
+.print-only{display:none;}
+#printInvoice{font-family:'Vazirmatn',Tahoma,Arial,sans-serif;color:#1a1a1a;padding:0;}
+#printInvoice .p-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #b215c6;padding-bottom:14px;margin-bottom:18px;}
+#printInvoice .p-header h2{font-size:20px;font-weight:800;}
+#printInvoice .p-header .p-track{text-align:left;direction:ltr;font-size:16px;font-weight:800;color:#a06f20;}
+#printInvoice .p-meta{margin-bottom:16px;font-size:13.5px;line-height:2;}
+#printInvoice table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+#printInvoice th,#printInvoice td{border:1px solid #ccc;padding:8px 10px;font-size:13px;text-align:right;}
+#printInvoice th{background:#f2f2f2;}
+#printInvoice .p-total{text-align:left;font-size:16px;font-weight:800;margin-bottom:18px;}
+#printInvoice .p-pay{border:1px dashed #a06f20;border-radius:8px;padding:12px;font-size:13.5px;line-height:2;}
+#printInvoice .p-footer{margin-top:24px;font-size:11.5px;color:#777;text-align:center;}
+@media (max-width: 480px){
+  header.top{padding:20px 14px 16px;}
+  header.top h1{font-size:19px;}
+  header.top p{font-size:12.5px;}
+  .wrap{padding:14px 10px;}
+  .card-section{padding:14px 12px;border-radius:12px;}
+  .card-section h2{font-size:14px;}
+  .grade-btn{padding:8px 13px;font-size:13px;}
+  .product-card .thumb{width:44px;height:44px;}
+  .product-card .pname{font-size:14px;}
+  .price-preview{font-size:14px;}
+  .primary-btn, .secondary-btn, .add-btn{font-size:14px;padding:12px;}
+  .cart-bar{padding:12px 14px;}
+  .card-num{font-size:16px;letter-spacing:1px;}
+  .track{font-size:18px;}
+}
+
+@media print{
+  body *{visibility:hidden;}
+  #printInvoice, #printInvoice *{visibility:visible;}
+  #printInvoice{display:block;position:absolute;top:0;left:0;width:100%;padding:30px;}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>📚 فاکتور سفارش آنلاین — تیچر مشایخ</h1>
+  <p>مشخصات‌تان را وارد کنید، کالا را جست‌وجو و سفارش دهید</p>
+  <div class="chalk-line"></div>
+</header>
+
+<div class="wrap">
+
+  <!-- 1) Customer info -->
+  <section class="card-section" id="customerSection">
+    <h2><span class="step-num">۱</span>مشخصات مشتری</h2>
+    <div class="field-row">
+      <label>نام و نام خانوادگی *</label>
+      <input class="text-input" id="custName" placeholder="مثلاً: زهرا احمدی">
+    </div>
+    <div class="field-row">
+      <label>شماره موبایل *</label>
+      <input class="text-input" id="custPhone" placeholder="مثال: 09123456789" type="tel" inputmode="numeric" maxlength="11">
+    </div>
+    <div class="field-row">
+      <label>آدرس پستی *</label>
+      <input class="text-input" id="custAddress" placeholder="مثلاً: تهران، خیابان...، پلاک...">
+    </div>
+    <div class="field-row">
+      <label>کدپستی *</label>
+      <input class="text-input" id="custPostal" placeholder="۱۰ رقم، بدون فاصله" type="tel" inputmode="numeric" maxlength="10">
+    </div>
+    <div class="status-msg" id="customerValidationMsg" style="color:var(--danger);font-weight:700;"></div>
+  </section>
+
+  <!-- 2) Products -->
+  <section class="card-section" id="productsSection">
+    <h2><span class="step-num">۲</span>انتخاب کالا</h2>
+    <div class="grades" id="grades"></div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="نام کالا را جست‌وجو کنید...">
+      <span class="icon">🔍</span>
+    </div>
+    <div id="productList"><div class="info-msg">⏳ در حال دریافت لیست محصولات از فروشگاه...</div></div>
+  </section>
+
+  <!-- 3) Cart -->
+  <section class="card-section" id="cartSection" style="display:none;">
+    <h2><span class="step-num">۳</span>سبد سفارش شما</h2>
+    <div id="cartItemsBox"></div>
+    <div class="grand-total"><span>مبلغ کل</span><span id="grandTotalText">۰ تومان</span></div>
+  </section>
+
+  <!-- 4) Notes -->
+  <section class="card-section" id="notesSection">
+    <h2><span class="step-num">۴</span>توضیحات سفارش (اختیاری)</h2>
+    <textarea class="text-input" id="orderNotes" placeholder="مثلاً: زمان تحویل، درخواست خاص و..."></textarea>
+  </section>
+
+  <!-- 5) Terms + submit -->
+  <section class="card-section" id="termsSection">
+    <h2><span class="step-num">۵</span>ثبت نهایی سفارش</h2>
+    <div class="terms-details">
+      ✏️ <b>قوانین فروشگاه</b> (این متن نمونه است — می‌توانید در فایل ویرایش کنید): پس از ثبت سفارش، مبلغ فاکتور باید ظرف ۲۴ ساعت واریز شود. سفارش پس از تایید واریزی توسط ادمین آماده‌سازی می‌شود. کد رهگیری خود را نزد خود نگه دارید.
+    </div>
+    <div class="terms-row">
+      <input type="checkbox" id="agreeTerms">
+      <label for="agreeTerms">قوانین و مقررات فروشگاه را مطالعه کرده و می‌پذیرم *</label>
+    </div>
+    <button class="primary-btn" id="initialSubmitBtn" onclick="initialSubmit()">✅ ثبت اولیه سفارش</button>
+    <div class="status-msg" id="validationMsg"></div>
+  </section>
+
+  <!-- 6) Invoice (hidden until submit) -->
+  <section class="card-section" id="invoiceSection" style="display:none;">
+    <h2><span class="step-num">✓</span>فاکتور نهایی سفارش</h2>
+    <div class="blink-warning">✅ لطفاً از این صفحه اسکرین سیو بگیرید و یا روی چاپ فاکتور و ذخیره کلیک کنید ✅</div>
+    <div class="invoice-box" id="invoiceBox"></div>
+    <div class="pay-box" id="payBox"></div>
+    <button class="primary-btn" onclick="printInvoice()">🖨️ چاپ فاکتور / ذخیره PDF</button>
+    <button class="secondary-btn" id="eitaaBtn">💬 ارسال کد رهگیری و رسید به ایتا (متن خودش کپی می‌شود)</button>
+    <div class="status-msg" id="statusMsg"></div>
+    <div class="blink-warning">✅ لطفاً از این صفحه اسکرین سیو بگیرید و یا روی چاپ فاکتور و ذخیره کلیک کنید ✅</div>
+  </section>
+
+
+</div>
+
+<div class="cart-bar" id="cartBar" style="display:none;" onclick="scrollToCart()">
+  <div class="left">سبد سفارش <span class="count" id="cartCount">0</span></div>
+  <div class="total" id="cartBarTotal">۰ تومان</div>
+</div>
+
+<div id="printInvoice" class="print-only"></div>
+
+<script>
+/* ============================================================
+   ⚙️  تنظیمات فروشگاه — این‌ها را با اطلاعات واقعی خود عوض کنید
+   ============================================================ */
+
+const ADMIN_EITAA_USERNAME = "adminteachermashayekh";
+const CARD_NUMBER  = "6219861073836958";
+const CARD_HOLDER  = "زینب مشایخ";
+
+// آدرس وب‌اپ گوگل اسکریپت شما (همان که برای Products و Orders استفاده می‌شود)
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxHbi0j7Zoc74g0IXbDeszcEXXDcRZL6o6cQpoo026hrqfujEA3RVMkCSC9KGh0j2zZ/exec";
+
+/* ============================================================
+   State
+   ============================================================ */
+let products = [];
+let grades = [];
+let activeGrade = "همه";
+let searchTerm = "";
+let openCardKey = null;
+const draft = {};
+let cart = [];
+let lastOrder = null;
+
+/* ============================================================
+   Helpers
+   ============================================================ */
+function fmt(n){ return Math.round(n).toLocaleString('fa-IR') + " تومان"; }
+
+function toEnglishDigits(str){
+  const fa = "۰۱۲۳۴۵۶۷۸۹", ar = "٠١٢٣٤٥٦٧٨٩";
+  return String(str).replace(/[۰-۹٠-٩]/g, ch=>{
+    let i = fa.indexOf(ch); if(i>-1) return i;
+    i = ar.indexOf(ch); if(i>-1) return i;
+    return ch;
+  });
+}
+function containsDigits(str){ return /[0-9۰-۹٠-٩]/.test(str); }
+
+function keyOf(p){ return p.code + "|" + p.name; }
+
+function parseSizes(raw){
+  if(!raw || !String(raw).trim()){
+    return [{ label: "استاندارد", price: 0 }];
+  }
+  return String(raw).split('|').map(pair=>{
+    const parts = pair.split(':');
+    const label = (parts[0] || '').trim();
+    const priceNum = Number(toEnglishDigits(parts[1] || '0').replace(/[^\d.-]/g,'')) || 0;
+    return { label: label || "استاندارد", price: priceNum };
+  }).filter(s=>s.label);
+}
+
+function finalPrice(basePrice, discountPercent){
+  const d = Number(discountPercent) || 0;
+  if(d <= 0) return basePrice;
+  return Math.round(basePrice * (1 - d/100));
+}
+
+function isOutOfStock(p){
+  const s = String(p.stock).trim();
+  if(s === "") return false; // خالی = نامحدود/موجود
+  return Number(s) === 0;
+}
+
+/* ============================================================
+   Fetch products from the Products sheet
+   ============================================================ */
+function fetchProducts(){
+  fetch(GAS_URL + "?action=products")
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.success){
+        document.getElementById('productList').innerHTML =
+          `<div class="error-msg">خطا در دریافت لیست محصولات. لطفاً صفحه را رفرش کنید.</div>`;
+        return;
+      }
+      products = data.products || [];
+      const gradeSet = [];
+      products.forEach(p=>{
+        if(p.grade && gradeSet.indexOf(p.grade) === -1) gradeSet.push(p.grade);
+      });
+      grades = gradeSet;
+      renderGrades();
+      renderProducts();
+    })
+    .catch(()=>{
+      document.getElementById('productList').innerHTML =
+        `<div class="error-msg">❌ اتصال به فروشگاه برقرار نشد. اینترنت خود را بررسی کنید و صفحه را رفرش کنید.</div>`;
+    });
+}
+
+/* ============================================================
+   Render: grade tabs
+   ============================================================ */
+function renderGrades(){
+  const el = document.getElementById('grades');
+  const all = ["همه", ...grades];
+  el.innerHTML = all.map(g=>{
+    return `<button type="button" class="grade-btn ${g===activeGrade?'active':''}" data-g="${g}">${g}</button>`;
+  }).join('');
+  el.querySelectorAll('.grade-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeGrade = btn.dataset.g;
+      renderGrades();
+      renderProducts();
+    });
+  });
+}
+
+/* ============================================================
+   Render: product list
+   ============================================================ */
+function renderProducts(){
+  const list = document.getElementById('productList');
+
+  if(products.length === 0){
+    list.innerHTML = `<div class="info-msg">⏳ در حال دریافت لیست محصولات...</div>`;
+    return;
+  }
+
+  // در تب «همه» فقط با جست‌وجو نتیجه نشان داده می‌شود (برای جلوگیری از رندر ۲۰۰+ محصول)
+  if(activeGrade === "همه" && !searchTerm){
+    list.innerHTML = `<div class="info-msg">🔍 برای دیدن محصولات، نام کالا را جست‌وجو کنید یا یکی از پایه‌ها را از بالا انتخاب کنید.</div>`;
+    return;
+  }
+
+  const filtered = products.filter(p=>{
+    const gradeOk = activeGrade === "همه" || p.grade === activeGrade;
+    const searchOk = !searchTerm || String(p.name).includes(searchTerm);
+    return gradeOk && searchOk;
+  });
+
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="info-msg">کالایی با این مشخصات پیدا نشد 🔍</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(p=>{
+    const key = keyOf(p);
+    const isOpen = openCardKey === key;
+    const sizes = parseSizes(p.sizes);
+    const oos = isOutOfStock(p);
+    const d = draft[key] || { sizeIdx: 0, qty: 1, desc: "" };
+    draft[key] = d;
+
+    const sel = sizes[d.sizeIdx] || sizes[0];
+    const base = sel.price;
+    const fp = finalPrice(base, p.discount);
+    const hasDiscount = fp < base;
+
+    const sizeOptions = sizes.map((s,i)=>{
+      const sfp = finalPrice(s.price, p.discount);
+      return `<option value="${i}" ${i===d.sizeIdx?'selected':''}>${s.label} — ${fmt(sfp)}</option>`;
+    }).join('');
+
+    return `
+      <div class="product-card ${isOpen?'open':''} ${oos?'out-of-stock':''}" data-key="${key}">
+        ${p.badge ? `<div class="badge-ribbon">${p.badge}</div>` : ''}
+        <div class="row-top">
+          ${p.image ? `<img class="thumb" src="${p.image}" onerror="this.style.display='none'">` : ''}
+          <div style="flex:1;">
+            <div class="pname">${p.name}</div>
+            <div class="pmeta-line">${[p.grade, p.lesson].filter(Boolean).join(' • ')}</div>
+            ${p.description ? `<div class="pdesc">${p.description}</div>` : ''}
+            ${oos ? `<span class="oos-tag">ناموجود</span>` : ''}
+          </div>
+        </div>
+        <button type="button" class="select-toggle" data-key="${key}">${isOpen ? 'بستن ▲' : (oos ? 'مشاهده جزئیات ▼' : 'انتخاب و افزودن ▼')}</button>
+        <div class="expand" style="display:${isOpen?'block':'none'};">
+          <div class="field-row">
+            <label>سایز</label>
+            <select class="size-select" data-key="${key}" ${oos?'disabled':''}>
+              ${sizeOptions}
+            </select>
+          </div>
+          <div class="price-preview">
+            ${hasDiscount ? `<span class="old">${fmt(base)}</span>` : ''}
+            ${fmt(fp)} ${hasDiscount ? ' (تخفیف ' + Number(p.discount) + '٪)' : ''}
+          </div>
+          <div class="field-row">
+            <label>تعداد</label>
+            <div class="qty-control">
+              <button type="button" class="qty-minus" data-key="${key}" ${oos?'disabled':''}>−</button>
+              <span>${d.qty}</span>
+              <button type="button" class="qty-plus" data-key="${key}" ${oos?'disabled':''}>+</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <label>توضیح این کالا (اختیاری)</label>
+            <textarea class="desc" data-key="${key}" placeholder="مثلاً: رنگ خاص و...">${d.desc}</textarea>
+          </div>
+          <button type="button" class="add-btn" data-key="${key}" ${oos?'disabled':''}>${oos ? 'ناموجود است' : '➕ افزودن به سبد'}</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('.select-toggle').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const k = b.dataset.key;
+      openCardKey = openCardKey === k ? null : k;
+      renderProducts();
+    });
+  });
+  list.querySelectorAll('.size-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      draft[sel.dataset.key].sizeIdx = Number(sel.value);
+      renderProducts();
+    });
+  });
+  list.querySelectorAll('.qty-plus').forEach(b=>{
+    b.addEventListener('click', ()=>{ draft[b.dataset.key].qty++; renderProducts(); });
+  });
+  list.querySelectorAll('.qty-minus').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const d = draft[b.dataset.key];
+      if(d.qty > 1) d.qty--;
+      renderProducts();
+    });
+  });
+  list.querySelectorAll('.desc').forEach(t=>{
+    t.addEventListener('input', ()=>{ draft[t.dataset.key].desc = t.value; });
+  });
+  list.querySelectorAll('.add-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const key = b.dataset.key;
+      const p = products.find(pp=>keyOf(pp)===key);
+      const d = draft[key];
+      const sizes = parseSizes(p.sizes);
+      const sel = sizes[d.sizeIdx] || sizes[0];
+      const fp = finalPrice(sel.price, p.discount);
+
+      cart.push({
+        cartKey: key + "#" + Date.now(),
+        name: p.name, grade: p.grade, lesson: p.lesson,
+        size: sel.label, qty: d.qty, desc: d.desc.trim(),
+        unitPrice: fp
+      });
+
+      draft[key] = { sizeIdx: 0, qty: 1, desc: "" };
+      openCardKey = null;
+      renderProducts();
+      renderCart();
+    });
+  });
+}
+
+/* ============================================================
+   Cart
+   ============================================================ */
+function cartTotal(){ return cart.reduce((s,i)=> s + i.unitPrice*i.qty, 0); }
+
+function renderCart(){
+  const section = document.getElementById('cartSection');
+  const bar = document.getElementById('cartBar');
+  if(cart.length === 0){
+    section.style.display = 'none';
+    bar.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  bar.style.display = 'flex';
+  document.getElementById('cartCount').textContent = cart.length;
+  document.getElementById('cartBarTotal').textContent = fmt(cartTotal());
+
+  const box = document.getElementById('cartItemsBox');
+  box.innerHTML = cart.map(item=>{
+    const meta = [item.grade, item.size, `تعداد: ${item.qty}`, item.desc].filter(Boolean).join(' • ');
+    return `
+      <div class="cart-item">
+        <div class="info">
+          <b>${item.name}</b>
+          <div class="meta">${meta}</div>
+          <button class="remove-x" data-key="${item.cartKey}">حذف ✕</button>
+        </div>
+        <div class="price">${fmt(item.unitPrice * item.qty)}</div>
+      </div>`;
+  }).join('');
+  box.querySelectorAll('.remove-x').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      cart = cart.filter(i=>i.cartKey !== b.dataset.key);
+      renderCart();
+    });
+  });
+  document.getElementById('grandTotalText').textContent = fmt(cartTotal());
+}
+
+function scrollToCart(){
+  document.getElementById('cartSection').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ============================================================
+   Validation + initial submit
+   ============================================================ */
+function genTrackingCode(){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "TM-";
+  for(let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+
+function initialSubmit(){
+  const custMsg = document.getElementById('customerValidationMsg');
+  const msg = document.getElementById('validationMsg');
+  custMsg.textContent = '';
+  msg.textContent = '';
+
+  const name = document.getElementById('custName').value.trim();
+  const phoneRaw = document.getElementById('custPhone').value.trim();
+  const address = document.getElementById('custAddress').value.trim();
+  const postalRaw = document.getElementById('custPostal').value.trim();
+  const phone = toEnglishDigits(phoneRaw);
+  const postal = toEnglishDigits(postalRaw);
+  const agreed = document.getElementById('agreeTerms').checked;
+
+  if(!name){ custMsg.textContent = 'لطفاً نام و نام خانوادگی را وارد کنید.'; scrollToEl('customerSection'); return; }
+  if(containsDigits(name)){ custMsg.textContent = 'نام و نام خانوادگی باید فقط شامل حروف باشد، نه عدد.'; scrollToEl('customerSection'); return; }
+  if(!/^09\d{9}$/.test(phone)){ custMsg.textContent = 'شماره موبایل معتبر نیست. فرمت درست: 09123456789'; scrollToEl('customerSection'); return; }
+  if(!address){ custMsg.textContent = 'لطفاً آدرس پستی را وارد کنید.'; scrollToEl('customerSection'); return; }
+  if(!/^\d{10}$/.test(postal)){ custMsg.textContent = 'کدپستی باید دقیقاً ۱۰ رقم باشد.'; scrollToEl('customerSection'); return; }
+  if(cart.length === 0){ msg.textContent = 'سبد سفارش شما خالی است. لطفاً حداقل یک کالا اضافه کنید.'; scrollToEl('productsSection'); return; }
+  if(!agreed){ msg.textContent = 'لطفاً ابتدا قوانین و مقررات را بپذیرید.'; return; }
+
+  msg.textContent = '';
+
+  const trackingCode = genTrackingCode();
+  const total = cartTotal();
+  const notes = document.getElementById('orderNotes').value.trim();
+
+  lastOrder = {
+    trackingCode, name, phone, address, postal, notes,
+    items: cart.slice(),
+    total,
+    date: new Date().toLocaleString('fa-IR')
+  };
+
+  renderInvoice(lastOrder);
+  buildPrintInvoice(lastOrder);
+  document.getElementById('invoiceSection').style.display = 'block';
+  sendToGoogleSheet(lastOrder);
+  scrollToEl('invoiceSection');
+}
+
+function scrollToEl(id){
+  document.getElementById(id).scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ============================================================
+   Invoice rendering
+   ============================================================ */
+function buildInvoiceText(order){
+  const lines = order.items.map((it,i)=>{
+    const meta = [it.size, `تعداد: ${it.qty}`, it.desc].filter(Boolean).join('، ');
+    return `${i+1}. ${it.name} (${it.grade})${meta ? ' — ' + meta : ''} — ${fmt(it.unitPrice*it.qty)}`;
+  }).join('\n');
+
+  return [
+    `🧾 فاکتور سفارش — تیچر مشایخ`,
+    `کد رهگیری: ${order.trackingCode}`,
+    `نام مشتری: ${order.name}`,
+    `تماس: ${order.phone}`,
+    `آدرس: ${order.address}`,
+    `کدپستی: ${order.postal}`,
+    order.notes ? `توضیحات: ${order.notes}` : null,
+    ``,
+    lines,
+    ``,
+    `مبلغ کل: ${fmt(order.total)}`,
+    ``,
+    `شماره کارت جهت واریز: ${CARD_NUMBER}`,
+    `به نام: ${CARD_HOLDER}`,
+  ].filter(x=>x!==null).join('\n');
+}
+
+function renderInvoice(order){
+  const box = document.getElementById('invoiceBox');
+  const lines = order.items.map(it=>{
+    const meta = [it.size, `تعداد: ${it.qty}`, it.desc].filter(Boolean).join('، ');
+    return `<div class="invoice-line"><span>${it.name}${meta?' ('+meta+')':''}</span><span>${fmt(it.unitPrice*it.qty)}</span></div>`;
+  }).join('');
+
+  box.innerHTML = `
+    <div class="track-label">کد رهگیری شما</div>
+    <div class="track">${order.trackingCode}</div>
+    ${lines}
+    <div class="invoice-line" style="font-weight:800;border-bottom:none;margin-top:6px;">
+      <span>مبلغ کل</span><span>${fmt(order.total)}</span>
+    </div>
+  `;
+
+  document.getElementById('payBox').innerHTML = `
+    لطفاً مبلغ <b>${fmt(order.total)}</b> را به شماره کارت زیر واریز کنید:
+    <div class="card-num">${CARD_NUMBER}</div>
+    به نام: <b>${CARD_HOLDER}</b><br>
+    سپس کد رهگیری <b>${order.trackingCode}</b> را همراه <b>رسید پرداخت</b> برای ادمین در ایتا ارسال کنید.
+  `;
+
+  const eitaaBtn = document.getElementById('eitaaBtn');
+  eitaaBtn.onclick = ()=>{
+    copyInvoice().then(()=>{
+      window.open('https://eitaa.com/' + ADMIN_EITAA_USERNAME, '_blank');
+      document.getElementById('statusMsg').textContent = '✅ کد رهگیری و فاکتور کپی شد — در چت ایتا Paste کنید و رسید پرداخت را هم پیوست کنید.';
+    });
+  };
+}
+
+function copyInvoice(){
+  if(!lastOrder) return Promise.resolve(false);
+  const text = buildInvoiceText(lastOrder);
+  if(navigator.clipboard?.writeText){
+    return navigator.clipboard.writeText(text).then(()=>{
+      document.getElementById('statusMsg').textContent = '✅ متن فاکتور (شامل کد رهگیری) کپی شد.';
+      return true;
+    }).catch(()=>{
+      prompt('کپی خودکار انجام نشد. این متن را دستی کپی کنید:', text);
+      return false;
+    });
+  } else {
+    prompt('این متن را کپی کنید:', text);
+    return Promise.resolve(false);
+  }
+}
+
+function buildPrintInvoice(order){
+  const rows = order.items.map(it=>{
+    const meta = [it.size, it.desc].filter(Boolean).join('، ');
+    return `
+      <tr>
+        <td>${it.name}</td>
+        <td>${it.grade || '-'}</td>
+        <td>${meta || '-'}</td>
+        <td>${it.qty}</td>
+        <td>${fmt(it.unitPrice*it.qty)}</td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('printInvoice').innerHTML = `
+    <div class="p-header">
+      <div>
+        <h2>🧾 فاکتور سفارش — تیچر مشایخ</h2>
+        <div style="font-size:12px;color:#777;margin-top:4px;">${order.date}</div>
+      </div>
+      <div class="p-track">کد رهگیری<br>${order.trackingCode}</div>
+    </div>
+    <div class="p-meta">
+      <div><b>نام مشتری:</b> ${order.name}</div>
+      <div><b>شماره موبایل:</b> ${order.phone}</div>
+      <div><b>آدرس:</b> ${order.address}</div>
+      <div><b>کدپستی:</b> ${order.postal}</div>
+      ${order.notes ? `<div><b>توضیحات:</b> ${order.notes}</div>` : ''}
+    </div>
+    <table>
+      <thead><tr><th>کالا</th><th>پایه</th><th>توضیحات</th><th>تعداد</th><th>قیمت</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="p-total">مبلغ کل قابل پرداخت: ${fmt(order.total)}</div>
+    <div class="p-pay">
+      لطفاً مبلغ فوق را به شماره کارت زیر واریز کنید:<br>
+      <b style="font-size:15px;">${CARD_NUMBER}</b> — به نام <b>${CARD_HOLDER}</b><br>
+      سپس کد رهگیری و رسید پرداخت را برای ادمین کانال در ایتا ارسال کنید.
+    </div>
+    <div class="p-footer">تیچر مشایخ — ${new Date().toLocaleDateString('fa-IR')}</div>
+  `;
+}
+
+function printInvoice(){
+  if(!lastOrder){
+    alert('ابتدا سفارش را ثبت کنید تا فاکتور آماده شود.');
+    return;
+  }
+  window.print();
+}
+
+/* ============================================================
+   Send order to Google Sheet
+   ============================================================ */
+function sendToGoogleSheet(order){
+  const itemsText = order.items.map(it=>{
+    const meta = [it.size, `تعداد: ${it.qty}`, it.desc].filter(Boolean).join('، ');
+    return `${it.name} (${it.grade})${meta ? ' - ' + meta : ''}`;
+  }).join('\n');
+
+  const payload = {
+    trackingCode: order.trackingCode,
+    date: order.date,
+    name: order.name,
+    phone: order.phone,
+    address: order.address + ' — کدپستی: ' + order.postal + (order.notes ? (' — توضیحات: ' + order.notes) : ''),
+    items: itemsText,
+    total: order.total,
+    status: ""
+  };
+
+  fetch(GAS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  }).catch(()=>{ /* اگر اینترنت مشکل داشت، سفارش همچنان در فاکتور نمایش داده شده */ });
+}
+
+/* ============================================================
+   Init
+   ============================================================ */
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value.trim();
+  renderProducts();
+});
+
+fetchProducts();
+</script>
+</body>
+</html>
