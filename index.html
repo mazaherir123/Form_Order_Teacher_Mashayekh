@@ -315,7 +315,20 @@ textarea.desc{
   <section class="card-section" id="cartSection" style="display:none;">
     <h2><span class="step-num">۳</span>سبد سفارش شما</h2>
     <div id="cartItemsBox"></div>
-    <div class="grand-total"><span>مبلغ کل</span><span id="grandTotalText">۰ تومان</span></div>
+
+    <div class="field-row" style="margin-top:10px;">
+      <label>کد تخفیف (اختیاری)</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="text-input" id="discountInput" placeholder="مثلاً: THM5" style="margin-bottom:0;flex:1;">
+        <button type="button" class="secondary-btn" style="width:auto;margin-top:0;white-space:nowrap;" id="applyDiscountBtn" onclick="applyDiscount()">اعمال کد</button>
+      </div>
+      <div class="status-msg" id="discountMsg"></div>
+    </div>
+
+    <div class="invoice-line"><span>جمع کالاها</span><span id="subtotalText">۰ تومان</span></div>
+    <div class="invoice-line" id="discountLine" style="display:none;color:var(--add-green-dark);"><span id="discountLineLabel">تخفیف</span><span id="discountLineAmount">۰ تومان</span></div>
+    <div class="invoice-line"><span>هزینه ارسال</span><span id="shippingLineAmount">در حال محاسبه...</span></div>
+    <div class="grand-total"><span>مبلغ نهایی قابل پرداخت</span><span id="grandTotalText">۰ تومان</span></div>
   </section>
 
   <!-- 4) Notes -->
@@ -383,6 +396,8 @@ let openCardKey = null;
 const draft = {};
 let cart = [];
 let lastOrder = null;
+let shippingTiers = []; // [تا3, 4تا5, 6تا8, 9به‌بالا]
+let appliedDiscount = null; // { code, percent }
 
 /* ============================================================
    Helpers
@@ -449,6 +464,58 @@ function fetchProducts(){
     .catch(()=>{
       document.getElementById('productList').innerHTML =
         `<div class="error-msg">❌ اتصال به فروشگاه برقرار نشد. اینترنت خود را بررسی کنید و صفحه را رفرش کنید.</div>`;
+    });
+}
+
+function fetchShippingTiers(){
+  fetch(GAS_URL + "?action=shipping")
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.success && Array.isArray(data.tiers) && data.tiers.length >= 4){
+        shippingTiers = data.tiers;
+      }
+      renderCart(); // اگر سبد قبلاً رندر شده بود، هزینه ارسال را به‌روزرسانی کن
+    })
+    .catch(()=>{ /* اگر نیامد، هزینه ارسال در فاکتور به‌صورت "نامشخص" نشان داده می‌شود */ });
+}
+
+// مرزهای تعداد کل اقلام: ۱تا۳ / ۴تا۵ / ۶تا۸ / ۹به‌بالا
+function computeShippingCost(totalQty){
+  if(shippingTiers.length < 4) return null; // هنوز از سرور نیامده
+  if(totalQty <= 3) return shippingTiers[0];
+  if(totalQty <= 5) return shippingTiers[1];
+  if(totalQty <= 8) return shippingTiers[2];
+  return shippingTiers[3];
+}
+
+function cartTotalQty(){ return cart.reduce((s,i)=> s + i.qty, 0); }
+
+function applyDiscount(){
+  const input = document.getElementById('discountInput');
+  const msg = document.getElementById('discountMsg');
+  const code = input.value.trim();
+  if(!code){ msg.textContent = 'یک کد وارد کنید.'; msg.style.color = 'var(--danger)'; return; }
+
+  msg.textContent = 'در حال بررسی کد...';
+  msg.style.color = 'var(--ink-soft)';
+
+  fetch(GAS_URL + "?action=validateDiscount&code=" + encodeURIComponent(code))
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.success && data.valid){
+        appliedDiscount = { code: data.code, percent: data.percent };
+        msg.textContent = `✅ کد «${data.code}» با ${data.percent}٪ تخفیف اعمال شد.`;
+        msg.style.color = 'var(--add-green-dark)';
+      } else {
+        appliedDiscount = null;
+        msg.textContent = '❌ کد تخفیف معتبر نیست.';
+        msg.style.color = 'var(--danger)';
+      }
+      renderCart();
+    })
+    .catch(()=>{
+      msg.textContent = '❌ خطا در بررسی کد. دوباره تلاش کنید.';
+      msg.style.color = 'var(--danger)';
     });
 }
 
@@ -612,6 +679,15 @@ function renderProducts(){
    ============================================================ */
 function cartTotal(){ return cart.reduce((s,i)=> s + i.unitPrice*i.qty, 0); }
 
+function computeOrderTotals(){
+  const subtotal = cartTotal();
+  const discountAmount = appliedDiscount ? Math.round(subtotal * appliedDiscount.percent / 100) : 0;
+  const totalQty = cartTotalQty();
+  const shippingCost = computeShippingCost(totalQty);
+  const grandTotal = subtotal - discountAmount + (shippingCost || 0);
+  return { subtotal, discountAmount, shippingCost, grandTotal, totalQty };
+}
+
 function renderCart(){
   const section = document.getElementById('cartSection');
   const bar = document.getElementById('cartBar');
@@ -622,8 +698,11 @@ function renderCart(){
   }
   section.style.display = 'block';
   bar.style.display = 'flex';
+
+  const t = computeOrderTotals();
+
   document.getElementById('cartCount').textContent = cart.length;
-  document.getElementById('cartBarTotal').textContent = fmt(cartTotal());
+  document.getElementById('cartBarTotal').textContent = fmt(t.grandTotal);
 
   const box = document.getElementById('cartItemsBox');
   box.innerHTML = cart.map(item=>{
@@ -644,7 +723,22 @@ function renderCart(){
       renderCart();
     });
   });
-  document.getElementById('grandTotalText').textContent = fmt(cartTotal());
+
+  document.getElementById('subtotalText').textContent = fmt(t.subtotal);
+
+  const discountLine = document.getElementById('discountLine');
+  if(appliedDiscount && t.discountAmount > 0){
+    discountLine.style.display = 'flex';
+    document.getElementById('discountLineLabel').textContent = `تخفیف (${appliedDiscount.code} — ${appliedDiscount.percent}٪)`;
+    document.getElementById('discountLineAmount').textContent = '−' + fmt(t.discountAmount);
+  } else {
+    discountLine.style.display = 'none';
+  }
+
+  document.getElementById('shippingLineAmount').textContent =
+    (t.shippingCost === null) ? 'در حال محاسبه...' : fmt(t.shippingCost);
+
+  document.getElementById('grandTotalText').textContent = fmt(t.grandTotal);
 }
 
 function scrollToCart(){
@@ -685,14 +779,24 @@ function initialSubmit(){
 
   msg.textContent = '';
 
+  const t = computeOrderTotals();
+  if(t.shippingCost === null){
+    msg.textContent = 'هزینه ارسال هنوز از سرور دریافت نشده. چند ثانیه صبر کنید و دوباره تلاش کنید.';
+    return;
+  }
+
   const trackingCode = genTrackingCode();
-  const total = cartTotal();
   const notes = document.getElementById('orderNotes').value.trim();
 
   lastOrder = {
     trackingCode, name, phone, address, postal, notes,
     items: cart.slice(),
-    total,
+    subtotal: t.subtotal,
+    discountCode: appliedDiscount ? appliedDiscount.code : "",
+    discountPercent: appliedDiscount ? appliedDiscount.percent : 0,
+    discountAmount: t.discountAmount,
+    shippingCost: t.shippingCost,
+    total: t.grandTotal,
     date: new Date().toLocaleString('fa-IR')
   };
 
@@ -727,7 +831,10 @@ function buildInvoiceText(order){
     ``,
     lines,
     ``,
-    `مبلغ کل: ${fmt(order.total)}`,
+    `جمع کالاها: ${fmt(order.subtotal)}`,
+    order.discountAmount > 0 ? `تخفیف (${order.discountCode} — ${order.discountPercent}٪): −${fmt(order.discountAmount)}` : null,
+    `هزینه ارسال: ${fmt(order.shippingCost)}`,
+    `مبلغ نهایی قابل پرداخت: ${fmt(order.total)}`,
     ``,
     `شماره کارت جهت واریز: ${CARD_NUMBER}`,
     `به نام: ${CARD_HOLDER}`,
@@ -745,8 +852,11 @@ function renderInvoice(order){
     <div class="track-label">کد رهگیری شما</div>
     <div class="track">${order.trackingCode}</div>
     ${lines}
+    <div class="invoice-line"><span>جمع کالاها</span><span>${fmt(order.subtotal)}</span></div>
+    ${order.discountAmount > 0 ? `<div class="invoice-line" style="color:var(--add-green-dark);"><span>تخفیف (${order.discountCode} — ${order.discountPercent}٪)</span><span>−${fmt(order.discountAmount)}</span></div>` : ''}
+    <div class="invoice-line"><span>هزینه ارسال</span><span>${fmt(order.shippingCost)}</span></div>
     <div class="invoice-line" style="font-weight:800;border-bottom:none;margin-top:6px;">
-      <span>مبلغ کل</span><span>${fmt(order.total)}</span>
+      <span>مبلغ نهایی قابل پرداخت</span><span>${fmt(order.total)}</span>
     </div>
   `;
 
@@ -815,7 +925,12 @@ function buildPrintInvoice(order){
       <thead><tr><th>کالا</th><th>پایه</th><th>توضیحات</th><th>تعداد</th><th>قیمت</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="p-total">مبلغ کل قابل پرداخت: ${fmt(order.total)}</div>
+    <div class="p-meta">
+      <div><b>جمع کالاها:</b> ${fmt(order.subtotal)}</div>
+      ${order.discountAmount > 0 ? `<div><b>تخفیف (${order.discountCode} — ${order.discountPercent}٪):</b> −${fmt(order.discountAmount)}</div>` : ''}
+      <div><b>هزینه ارسال:</b> ${fmt(order.shippingCost)}</div>
+    </div>
+    <div class="p-total">مبلغ نهایی قابل پرداخت: ${fmt(order.total)}</div>
     <div class="p-pay">
       لطفاً مبلغ فوق را به شماره کارت زیر واریز کنید:<br>
       <b style="font-size:15px;">${CARD_NUMBER}</b> — به نام <b>${CARD_HOLDER}</b><br>
@@ -837,9 +952,9 @@ function printInvoice(){
    Send order to Google Sheet
    ============================================================ */
 function sendToGoogleSheet(order){
+  // فرمت: نام | پایه | سایز | تعداد | توضیحات   (برای این‌که پنل ادمین بتواند جدول بسازد)
   const itemsText = order.items.map(it=>{
-    const meta = [it.size, `تعداد: ${it.qty}`, it.desc].filter(Boolean).join('، ');
-    return `${it.name} (${it.grade})${meta ? ' - ' + meta : ''}`;
+    return [it.name, it.grade || '', it.size || '', it.qty, it.desc || ''].join(' | ');
   }).join('\n');
 
   const payload = {
@@ -849,6 +964,11 @@ function sendToGoogleSheet(order){
     phone: order.phone,
     address: order.address + ' — کدپستی: ' + order.postal + (order.notes ? (' — توضیحات: ' + order.notes) : ''),
     items: itemsText,
+    subtotal: order.subtotal,
+    discountCode: order.discountCode || "",
+    discountPercent: order.discountPercent || 0,
+    discountAmount: order.discountAmount || 0,
+    shippingCost: order.shippingCost,
     total: order.total,
     status: ""
   };
@@ -870,6 +990,7 @@ document.getElementById('searchInput').addEventListener('input', (e)=>{
 });
 
 fetchProducts();
+fetchShippingTiers();
 </script>
 </body>
 </html>
